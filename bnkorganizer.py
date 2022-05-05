@@ -77,12 +77,24 @@ def OrganizerFull():
         print("These one-channel files' channels are compatible.")
         wem_original.seek(0xDC)
         wem_originalDataLength = wem_original.read(4)
+        progressLabel = tk.Label(root, text = "These one-channel files' channels are compatible.")
+        progressLabel.pack()
     elif w_o == "5c" and d_r == "0204":
         print("These two-channel files' channels are compatible.")
         wem_original.seek(0xFC)
         wem_originalDataLength = wem_original.read(4)
+        progressLabel = tk.Label(root, text="These two-channel files' channels are compatible.")
+        progressLabel.pack()
     else:
         print("These files' channels are not compatible.")
+        progressLabel = tk.Label(root, text="These one-channel files' channels are compatible. Press the button below to exit.")
+        progressLabel.pack()
+        var = tk.IntVar()
+        WaitConfirmation = tk.Button(root, text="Okay", command=lambda: var.set(1))
+        WaitConfirmation.pack()
+        root.wait_variable(var)
+        WaitConfirmation.pack_forget()
+        print("Exiting.")
         exit()
 
 
