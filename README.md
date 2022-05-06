@@ -1,4 +1,4 @@
-# Punch-Out--Wii-.dsp-to-.bnk-Converter
+# Punch-Out--Wii-.dsp-to-.wem-for-.bnk-Files-Converter
 Converts 2 channel dsp files to two channel .wem files to be put in .bnks with BNKEditor. Deleted old repository for privacy reasons. 
 
 Will work on updating GUI and 1 channel files if possible.
