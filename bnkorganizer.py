@@ -1,17 +1,15 @@
-import struct
 import tkinter as tk
-from tkinter import ttk
 from tkinter import filedialog as fd
-from tkinter.messagebox import showinfo
 import os
 
 
 # Create a window.
 root = tk.Tk()
-root.geometry("500x300")
-root.title(string="Main window for File selection and operation.")
+root.geometry("600x400")
+root.title(string=".dsp to .wem File Importer")
 Fun = tk.Label(text="Please press each button in order from top to bottom. Note that this only works for 2-channel files, as 1-channel files are still under development. Use BNKEditor to place your output files in your intended final destination.", wraplength=500)
 Fun.pack()
+
 
 
 #buttons for getting filenames
@@ -19,8 +17,7 @@ def wemFileLocation():
     global file_path
     file_path = fd.askopenfilename(title="Select A File", filetypes=(
     ("Original .wav file", "*.wav"), ("WEM File", "*.wem"), ("Any Type", "*.*")))
-    l1 = tk.Label(root, text="File path for wem: " + file_path).pack()
-
+    l1.configure(text="File path for wem: " + file_path)
     return file_path
 
 
@@ -28,14 +25,13 @@ def dspFileLocation():
     global file_path2
     file_path2 = fd.askopenfilename(title="Select A File", filetypes=(
         ("Original .dsp file", "*.dsp"), ("Interleaved .idsp File", "*.idsp"), ("Any Type", "*.*")))
-    l2 = tk.Label(root, text="File path for dsp: " + file_path2).pack()
-
+    l2.configure(text="File path for dsp: " + file_path2)
     return file_path2
 
 def outputDestination():
     global file_path3
     file_path3 = fd.askdirectory(title="Select a Folder")
-    l3 = tk.Label(root,text="File path for output:" + file_path3).pack()
+    l3.configure(text="File path for output:" + file_path3)
     return file_path3
 
 wemOpener = tk.Button(root, text = "Punch-Out!! Wii Wem File", command = wemFileLocation).pack()
@@ -300,9 +296,16 @@ def OrganizerFull():
 
 
     print("done")
-    endingText = tk.Label(root, text = "The process is complete. See WemOutFile.wem as your result.")
+    endingText = tk.Label(root, text = "The process is complete. See WemOutFile.wem as your result. Press okay to reset text.")
     endingText.pack()
-
+    waitVar = tk.IntVar()
+    clearScreen = tk.Button(root, text="Okay", command=lambda: waitVar.set(1))
+    clearScreen.pack()
+    root.wait_variable(waitVar)
+    clearScreen.pack_forget()
+    endingText.pack_forget()
+    warnText.pack_forget()
+    progressLabel.pack_forget()
 
     #10. Tell user to go implant it into where it needs to go in the .bnk file with BNKEditor.
     #show user instructions. also create button for this on main window.
@@ -310,6 +313,14 @@ def OrganizerFull():
     # 10a. Or become the biggest brain ever and write it myself using analysis of the DIDX section but I'm dumb dumb and this is already getting hard to automate for my poor brain.
     #hold off on this for now.
 runOrg = tk.Button(root, text = "Run", command = OrganizerFull).pack()
+
+
+l1 = tk.Label(root, text="File path for wem: Not yet defined.")
+l1.pack()
+l2 = tk.Label(root, text="File path for dsp: Not yet defined")
+l2.pack()
+l3 = tk.Label(root,text="File path for output: Not yet defined")
+l3.pack()
 
 root.mainloop()
 
