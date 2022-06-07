@@ -1,15 +1,15 @@
 import tkinter as tk
 from tkinter import filedialog as fd
 import os
+import sys
 
 
 # Create a window.
 root = tk.Tk()
 root.geometry("600x400")
 root.title(string=".dsp to .wem File Importer")
-Fun = tk.Label(text="Please press each button in order from top to bottom. Note that this only works for 2-channel files, as 1-channel files are still under development. Use BNKEditor to place your output files in your intended final destination.", wraplength=500)
+Fun = tk.Label(text="Please press each button in order from top to bottom. Press the checkmark box at least once or else the code WILL NOT WORK! Note that this works best for 2-channel files, as 1-channel files are still under development. \n\n If you plan to replace a .wav file, select the 0x08 interleave. \n\n If you are replacing a .wav/.wem from inside a .bnk file, do not select the 0x08 interleave. \n\n Use BNKEditor to place your output files in your intended final .bnk destination.", wraplength=500)
 Fun.pack()
-
 
 
 #buttons for getting filenames
@@ -24,7 +24,7 @@ def wemFileLocation():
 def dspFileLocation():
     global file_path2
     file_path2 = fd.askopenfilename(title="Select A File", filetypes=(
-        ("Original .dsp file", "*.dsp"), ("Interleaved .idsp File", "*.idsp"), ("Any Type", "*.*")))
+        ("Original .dsp file", "*.dsp"), ("Any Type", "*.*")))
     l2.configure(text="File path for dsp: " + file_path2)
     return file_path2
 
@@ -34,9 +34,28 @@ def outputDestination():
     l3.configure(text="File path for output:" + file_path3)
     return file_path3
 
+
+
+def returnInterleave():
+    global interleaveCertainty
+    if determInterleave.get() == True:
+        interleaveCertainty = 1
+        l4.configure(text="Your audio WILL be interleaved by 0x08.")
+        return interleaveCertainty
+    elif determInterleave.get() == False:
+        interleaveCertainty = 0
+        l4.configure(text="Your audio WILL NOT be interleaved by 0x08.")
+        return interleaveCertainty
+
+
 wemOpener = tk.Button(root, text = "Punch-Out!! Wii Wem File", command = wemFileLocation).pack()
 dspOpener = tk.Button(root, text = "VGAudio DSP File", command = dspFileLocation).pack()
 outputLocation = tk.Button(root, text = "Output folder for new Wem file", command = outputDestination).pack()
+
+determInterleave = tk.BooleanVar()
+checkInterleave = tk.Checkbutton(root, text='Check me to interleave audio data by 0x08', command = returnInterleave, variable = determInterleave)
+checkInterleave.pack()
+
 
 
 
@@ -54,9 +73,6 @@ def OrganizerFull():
 
     #Print value at offset 0x87 for both 1 and 2 channels for wem.
     w_o = wem_originalChannelByte.hex()
-    print(w_o)
-
-
 
     #Find value at offset 0x4B for both 1 and 2 channels for dsp.
     dsp_replacing.seek(0x4B)
@@ -64,34 +80,28 @@ def OrganizerFull():
 
     #Print value at offset 0x4B for both 1 and 2 channels for dsp.
     d_r = dsp_replacingChannelBytes.hex()
-    print(d_r)
-
 
     #Compares if files have the same set of channels.
 
     if w_o == "2e" and d_r == "0000":
-        print("These one-channel files' channels are compatible.")
         wem_original.seek(0xDC)
         wem_originalDataLength = wem_original.read(4)
         progressLabel = tk.Label(root, text = "These one-channel files' channels are compatible.")
         progressLabel.pack()
     elif w_o == "5c" and d_r == "0204":
-        print("These two-channel files' channels are compatible.")
         wem_original.seek(0xFC)
         wem_originalDataLength = wem_original.read(4)
         progressLabel = tk.Label(root, text="These two-channel files' channels are compatible.")
         progressLabel.pack()
     else:
-        print("These files' channels are not compatible.")
-        progressLabel = tk.Label(root, text="These one-channel files' channels are compatible. Press the button below to exit.")
+        progressLabel = tk.Label(root, text="These files' channels are not compatible. Press the button below to exit.")
         progressLabel.pack()
         var = tk.IntVar()
         WaitConfirmation = tk.Button(root, text="Okay", command=lambda: var.set(1))
         WaitConfirmation.pack()
         root.wait_variable(var)
         WaitConfirmation.pack_forget()
-        print("Exiting.")
-        exit()
+        sys.exit()
 
 
 
@@ -108,9 +118,7 @@ def OrganizerFull():
     #Converts byte size of file information into integers.
 
     wem_originalInt = int.from_bytes(wem_originalDataLength, byteorder='big')
-    print(wem_originalInt)
     dsp_replacingInt = int.from_bytes(dsp_replacingDataLength, byteorder='big')
-    print(dsp_replacingInt)
 
 
     #if statement for calculating size
@@ -122,44 +130,30 @@ def OrganizerFull():
     large = 0
 
     if dsp_replacingInt > wem_originalInt:
-        print("Your .wem file allows less data than your .dsp file. Please note that your data will be cut off. Continue?")
         small = 1
-        print("small")
-
         warnText = tk.Label(root, text = "Your .wem file allows less data than your .dsp file. Please note that your data will be cut off. Continue?", wraplength=500)
         warnText.pack()
         var = tk.IntVar()
         WaitConfirmation = tk.Button(root, text="Okay", command=lambda: var.set(1))
         WaitConfirmation.pack()
-        print("Continue?")
         root.wait_variable(var)
         WaitConfirmation.pack_forget()
-        print("Continuing.")
-
     elif dsp_replacingInt == wem_originalInt:
         warnText = tk.Label(root, text = "Your file is exactly the same size!")
         warnText.pack()
         same = 1
     else:
         large = 1
-        print("Your .wem file allows more data than your dsp file provides. Please note that additional null values of silence will replace the necessary length needed.")
-        print("large")
         warnText = tk.Label(root, text="Your .wem file allows more data than your dsp file provides. Please note that additional null values of silence will replace the necessary length needed. Continue?", wraplength=500)
         warnText.pack()
         var = tk.IntVar()
         WaitConfirmation = tk.Button(root, text="Okay", command=lambda: var.set(1))
         WaitConfirmation.pack()
-        print("Continue?")
         root.wait_variable(var)
         WaitConfirmation.pack_forget()
-        print("Continuing.")
 
     #4. Determine whether overwritten file length is too short to create a file. (as I'm tired of this, it is a feature that will have to wait.)
     #if size of wem is smaller than 2000, use stacking only for now and warn user (needs to be tested)
-
-
-
-
     # 5. Once all the basic checks are done, begin taking out the necessary data. The coefficient(s) which depend on channels and actual audio data.
     #create new file that is exact copy of wem
 
@@ -231,8 +225,6 @@ def OrganizerFull():
     oddByteCollectionWrite.seek(0x0)
     evenByteCollectionWrite.seek(0x0)
 
-
-
     #determine if interleave is necessary, then choose to interleave.
     if w_o == "2e":
         fullCollection = open(file_path3 + r"\totalList", "wb")
@@ -245,6 +237,10 @@ def OrganizerFull():
     #write only necessary data
     totalOdd = oddByteCollectionWrite.read()
     totalEven = evenByteCollectionWrite.read()
+
+    oddByteCollectionWrite.seek(0x00)
+    evenByteCollectionWrite.seek(0x00)
+
 
 
     if w_o == "2e":
@@ -259,43 +255,103 @@ def OrganizerFull():
     #determines what to write into output file based on size
     #large means that the wem file will accept more bytes, thus nulls need to fill in the blanks
     if large == 1:
-        wemOutputFile.write(totalOdd)
-        wemOutputFile.write(totalEven)
-        totalExtraNull = wem_originalInt - dsp_replacingInt
-        nullCounter = 0
-        while nullCounter < totalExtraNull:
-            wemOutputFile.write(b"\x00")
-            nullCounter = nullCounter + 1
+        if interleaveCertainty == 0:
+            wemOutputFile.write(totalOdd)
+            wemOutputFile.write(totalEven)
+            totalExtraNull = wem_originalInt - dsp_replacingInt
+            nullCounter = 0
+            while nullCounter < totalExtraNull:
+                wemOutputFile.write(b"\x00")
+                nullCounter = nullCounter + 1
+        else:
+            oddByteCollectionWrite.seek(0x00)
+            evenByteCollectionWrite.seek(0x00)
+            while oddByteCollectionWrite or evenByteCollectionWrite:
+                oddInterl = oddByteCollectionWrite.read(0x08)
+                evenInterl = evenByteCollectionWrite.read(0x08)
+                wemOutputFile.write(oddInterl)
+                wemOutputFile.write(evenInterl)
+                if oddInterl == b'':
+                    break
+            totalExtraNull = wem_originalInt - dsp_replacingInt
+            nullCounter = 0
+            while nullCounter < totalExtraNull:
+                wemOutputFile.write(b"\x00")
+                nullCounter = nullCounter + 1
+
+
     elif small == 1:
         #small means that the wem cannot take all the bytes, thus the file must cut off the data.
         #find the limit
-        differenceLarge = dsp_replacingInt - wem_originalInt
-        writeTotal = wem_originalInt // 2
-        #split into odd and even chunks
-        oddByteCollectionWrite.seek(0x0)
-        evenByteCollectionWrite.seek(0x0)
-        largeOdd = oddByteCollectionWrite.read(writeTotal)
-        largeEven = evenByteCollectionWrite.read(writeTotal)
-        #write into file stacked at max length
-        wemOutputFile.write(largeOdd)
-        wemOutputFile.write(largeEven)
+        if interleaveCertainty == 0:
+            differenceLarge = dsp_replacingInt - wem_originalInt
+            writeTotal = wem_originalInt // 2
+            #split into odd and even chunks
+            oddByteCollectionWrite.seek(0x0)
+            evenByteCollectionWrite.seek(0x0)
+            largeOdd = oddByteCollectionWrite.read(writeTotal)
+            largeEven = evenByteCollectionWrite.read(writeTotal)
+            #write into file stacked at max length
+            wemOutputFile.write(largeOdd)
+            wemOutputFile.write(largeEven)
+        else:
+            oddByteCollectionWrite.seek(0x00)
+            evenByteCollectionWrite.seek(0x00)
+            writeTotal = wem_originalInt // 2
+            #gets total that can be written
+            largeOdd = oddByteCollectionWrite.read(writeTotal)
+            largeEven = evenByteCollectionWrite.read(writeTotal)
+            #opens new files to store bytes
+            insertlargeOdd = open(file_path3 + r"\intlOdd", "wb")
+            insertlargeEven = open(file_path3 + r"\intlEven", "wb")
+            #writes bytes into files
+            insertlargeOdd.write(largeOdd)
+            insertlargeEven.write(largeEven)
+            #closes files from writing
+            insertlargeOdd.close()
+            insertlargeEven.close()
+            #opens files for reading
+            readlargeOdd = open(file_path3 + r"\intlOdd", "rb")
+            readlargeEven = open(file_path3 + r"\intlEven", "rb")
+
+            while oddByteCollectionWrite or evenByteCollectionWrite:
+                oddInterl = readlargeOdd.read(0x08)
+                evenInterl = readlargeEven.read(0x08)
+                wemOutputFile.write(oddInterl)
+                wemOutputFile.write(evenInterl)
+                if oddInterl == b'':
+                    break
     else:
-        #same, so write it all out.
-        wemOutputFile.write(totalOdd)
-        wemOutputFile.write(totalEven)
+        if interleaveCertainty == 0:
+            #same, so write it all out.
+            wemOutputFile.write(totalOdd)
+            wemOutputFile.write(totalEven)
+        else:
+            oddByteCollectionWrite.seek(0x00)
+            evenByteCollectionWrite.seek(0x00)
+            while oddByteCollectionWrite or evenByteCollectionWrite:
+                oddInterl = oddByteCollectionWrite.read(0x08)
+                evenInterl = evenByteCollectionWrite.read(0x08)
+                wemOutputFile.write(oddInterl)
+                wemOutputFile.write(evenInterl)
+                if oddInterl == b'':
+                    break
 
     oddByteCollectionWrite.close()
     evenByteCollectionWrite.close()
     os.remove(file_path3 + r"/oddByteList")
     os.remove(file_path3 + r"/evenByteList")
+    if interleaveCertainty == 1:
+        os.remove(file_path3 + r"\intlOdd")
+        os.remove(file_path3 + r"\intlEven")
+    else:
+        pass
 
     if w_o == "2e":
         os.remove(file_path3 + r"/totalList")
     else:
         pass
 
-
-    print("done")
     endingText = tk.Label(root, text = "The process is complete. See WemOutFile.wem as your result. Press okay to reset text.")
     endingText.pack()
     waitVar = tk.IntVar()
@@ -321,6 +377,8 @@ l2 = tk.Label(root, text="File path for dsp: Not yet defined")
 l2.pack()
 l3 = tk.Label(root,text="File path for output: Not yet defined")
 l3.pack()
+l4 = tk.Label(root, text="Your audio interleave is undefined.")
+l4.pack()
 
 root.mainloop()
 
