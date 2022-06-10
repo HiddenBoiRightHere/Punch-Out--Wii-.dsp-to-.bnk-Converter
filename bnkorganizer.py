@@ -6,7 +6,7 @@ import sys
 
 # Create a window.
 root = tk.Tk()
-root.geometry("600x400")
+root.geometry("600x500")
 root.title(string=".dsp to .wem File Importer")
 Fun = tk.Label(text="Please press each button in order from top to bottom. Press the checkmark box at least once or else the code WILL NOT WORK! Note that this works best for 2-channel files, as 1-channel files are still under development. \n\n If you plan to replace a .wav file, select the 0x08 interleave. \n\n If you are replacing a .wav/.wem from inside a .bnk file, do not select the 0x08 interleave. \n\n Use BNKEditor to place your output files in your intended final .bnk destination.", wraplength=500)
 Fun.pack()
@@ -342,12 +342,18 @@ def OrganizerFull():
     os.remove(file_path3 + r"/oddByteList")
     os.remove(file_path3 + r"/evenByteList")
     if interleaveCertainty == 1:
-        os.remove(file_path3 + r"\intlOdd")
-        os.remove(file_path3 + r"\intlEven")
+        if small == 1:
+            readlargeOdd.close()
+            readlargeEven.close()
+            os.remove(file_path3 + r"\intlOdd")
+            os.remove(file_path3 + r"\intlEven")
+        else:
+            pass
     else:
         pass
 
     if w_o == "2e":
+        fullCollectionWriter.close()
         os.remove(file_path3 + r"/totalList")
     else:
         pass
@@ -381,5 +387,3 @@ l4 = tk.Label(root, text="Your audio interleave is undefined.")
 l4.pack()
 
 root.mainloop()
-
-
